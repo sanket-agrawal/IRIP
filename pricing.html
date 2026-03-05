@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIP — Complete Cost Breakdown</title>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@75,300;75,400;75,600;100,700;125,800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0c0f;
+    --paper: #f5f2eb;
+    --paper2: #ede9df;
+    --paper3: #e4dfd3;
+    --line: #c8c0ae;
+    --line2: #b5ac99;
+    --text: #1a1a1a;
+    --text-mid: #4a4535;
+    --text-dim: #8a8070;
+    --red: #c0392b;
+    --amber: #d4620a;
+    --green: #1a6b3a;
+    --blue: #1a4580;
+    --purple: #5a2d8a;
+
+    /* Phase colors */
+    --mvp: #c0392b;
+    --growth: #d4620a;
+    --scale: #1a6b3a;
+    --enterprise: #1a4580;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--paper);
+    color: var(--text);
+    font-family: 'Anybody', sans-serif;
+    font-stretch: 75%;
+    min-height: 100vh;
+  }
+
+  /* RULED PAPER TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: repeating-linear-gradient(
+      transparent,
+      transparent 31px,
+      #c8c0ae40 31px,
+      #c8c0ae40 32px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  * { position: relative; z-index: 1; }
+
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 0 40px; }
+
+  /* HEADER — LEDGER STYLE */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 56px 40px 48px;
+    max-width: 100%;
+  }
+
+  .header-inner {
+    max-width: 1320px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 32px;
+  }
+
+  .header-eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #888;
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-size: clamp(36px, 6vw, 76px);
+    font-weight: 800;
+    font-stretch: 125%;
+    line-height: 0.95;
+    letter-spacing: -2px;
+  }
+
+  h1 em {
+    font-style: normal;
+    color: #d4a843;
+  }
+
+  .header-meta {
+    text-align: right;
+  }
+
+  .header-total-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #888;
+    margin-bottom: 6px;
+  }
+
+  .header-total {
+    font-size: 48px;
+    font-weight: 800;
+    font-stretch: 125%;
+    color: #d4a843;
+    letter-spacing: -2px;
+    line-height: 1;
+  }
+
+  .header-total-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  /* RED LEDGER LINE */
+  .ledger-line {
+    height: 3px;
+    background: var(--red);
+    max-width: 100%;
+  }
+
+  /* SECTION */
+  section {
+    padding: 48px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-right: 14px;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    font-stretch: 100%;
+    letter-spacing: -0.5px;
+  }
+
+  .section-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-mid);
+  }
+
+  /* PHASE BANNER */
+  .phase-banner {
+    padding: 10px 18px;
+    margin-bottom: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 2px;
+  }
+
+  .phase-banner-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: white;
+  }
+
+  .phase-banner-total {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+  }
+
+  /* TABLE LEDGER */
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .ledger thead tr {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  .ledger thead th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 500;
+  }
+
+  .ledger thead th:last-child,
+  .ledger thead th:nth-last-child(2) { text-align: right; }
+
+  .ledger tbody tr {
+    border-bottom: 1px solid var(--line);
+    transition: background 0.1s;
+  }
+
+  .ledger tbody tr:hover { background: var(--paper2); }
+
+  .ledger tbody td {
+    padding: 11px 14px;
+    vertical-align: top;
+  }
+
+  .ledger tbody td:last-child,
+  .ledger tbody td:nth-last-child(2) {
+    text-align: right;
+    font-family: 'JetBrains Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .ledger tfoot tr {
+    background: var(--paper2);
+    border-top: 2px solid var(--ink);
+  }
+
+  .ledger tfoot td {
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: right;
+  }
+
+  .ledger tfoot td:first-child {
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .item-name { font-weight: 600; }
+  .item-detail {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 3px;
+    line-height: 1.5;
+  }
+
+  .badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 1px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+
+  .badge-free { background: #d4edda; color: var(--green); border: 1px solid #a3d4b0; }
+  .badge-paid { background: #fde8e4; color: var(--red); border: 1px solid #f5b8b0; }
+  .badge-optional { background: #e8e4f8; color: var(--purple); border: 1px solid #c4b8e8; }
+  .badge-one-time { background: #fff3cd; color: var(--amber); border: 1px solid #ffd580; }
+
+  .cost-zero { color: var(--green); }
+  .cost-low { color: var(--text-mid); }
+  .cost-mid { color: var(--amber); }
+  .cost-high { color: var(--red); }
+
+  /* PHASE SUMMARY GRID */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    margin-bottom: 48px;
+  }
+
+  @media (max-width: 900px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  .summary-card {
+    padding: 24px 20px;
+    border: 1px solid var(--line);
+    background: var(--paper);
+  }
+
+  .summary-phase {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .summary-name {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+
+  .summary-amount {
+    font-size: 36px;
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -1px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .summary-period {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  .summary-breakdown {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-mid);
+  }
+
+  .summary-row-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  /* COMPARISON TABLE */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 200px repeat(4, 1fr);
+    border: 1px solid var(--line);
+  }
+
+  @media (max-width: 900px) { .compare-grid { display: none; } }
+
+  .cg-header {
+    background: var(--ink);
+    color: white;
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: center;
+    border-right: 1px solid #333;
+  }
+
+  .cg-header:first-child { text-align: left; }
+
+  .cg-row-label {
+    background: var(--paper2);
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cg-cell {
+    padding: 10px 16px;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    color: var(--text-mid);
+  }
+
+  .cg-cell.highlight { background: #fff9e6; font-weight: 700; color: var(--ink); }
+
+  /* ASSUMPTIONS BOX */
+  .assumptions {
+    background: var(--paper2);
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--ink);
+    padding: 20px 24px;
+    margin-bottom: 32px;
+  }
+
+  .assumptions-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .assumptions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px 32px;
+    list-style: none;
+  }
+
+  .assumptions-list li {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+    display: flex;
+    align-items: start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+
+  .assumptions-list li::before {
+    content: '→';
+    color: var(--red);
+    flex-shrink: 0;
+  }
+
+  /* TOTAL SUMMARY BAR */
+  .total-bar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 32px 40px;
+  }
+
+  .total-bar-inner {
+    max-width: 1320px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr repeat(3, auto);
+    gap: 48px;
+    align-items: center;
+  }
+
+  @media (max-width: 800px) { .total-bar-inner { grid-template-columns: 1fr 1fr; gap: 20px; } }
+
+  .total-bar-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .total-bar-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: #888;
+  }
+
+  .total-bar-item { text-align: right; }
+
+  .total-bar-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .total-bar-val {
+    font-size: 28px;
+    font-weight: 800;
+    font-stretch: 125%;
+    letter-spacing: -1px;
+    color: #d4a843;
+  }
+
+  /* RISK CALLOUT */
+  .risk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-top: 24px;
+  }
+
+  .risk-item {
+    background: var(--paper2);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--amber);
+    padding: 14px 16px;
+    font-size: 12px;
+  }
+
+  .risk-item strong { display: block; margin-bottom: 4px; font-size: 13px; }
+  .risk-item span { color: var(--text-mid); font-family: 'JetBrains Mono', monospace; font-size: 10px; }
+
+  /* COST OPTIMIZATIONS */
+  .opt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+
+  .opt-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 16px 18px;
+  }
+
+  .opt-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .opt-saving {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--green);
+    background: #d4edda;
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  .opt-desc {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+
+  /* SPACER */
+  .spacer { height: 32px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div>
+      <div class="header-eyebrow">Financial Projection · Insurance Risk Intelligence Platform · 2025–2026</div>
+      <h1>Complete<br>Cost <em>Breakdown</em></h1>
+    </div>
+    <div class="header-meta">
+      <div class="header-total-label">TOTAL ANNUAL (SCALE STAGE)</div>
+      <div class="header-total">~$5,400</div>
+      <div class="header-total-sub">per year at growth stage · MVP costs ~$600/yr</div>
+    </div>
+  </div>
+</header>
+<div class="ledger-line"></div>
+
+<div class="wrap">
+
+  <!-- PHASE SUMMARY CARDS -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">00 —</span><span class="section-title">Phase Cost Summary</span></div>
+      <div class="section-total">All 4 Tiers</div>
+    </div>
+
+    <div class="assumptions">
+      <div class="assumptions-title">Key Assumptions</div>
+      <ul class="assumptions-list">
+        <li>You are the sole developer — zero labor cost budgeted</li>
+        <li>MVP: 1–3 users (you + testers), low API call volume</li>
+        <li>Growth: 10–50 users (insurance professionals, pilot clients)</li>
+        <li>Scale: 50–500 users, multiple orgs, commercial clients</li>
+        <li>All AI processing done in-browser (ONNX) — reduces LLM API calls</li>
+        <li>3-tier cache hits reduce upstream API calls by ~80%</li>
+        <li>Most data sources are free/open — paid APIs are additive only</li>
+        <li>Costs in USD per month unless noted as one-time</li>
+      </ul>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-card" style="border-top: 4px solid var(--mvp)">
+        <div class="summary-phase" style="color:var(--mvp)">Phase 01</div>
+        <div class="summary-name">MVP / Dev</div>
+        <div class="summary-amount" style="color:var(--mvp)">$0–47</div>
+        <div class="summary-period">per month · Weeks 1–4</div>
+        <div class="summary-breakdown">
+          <div class="summary-row"><span>Hosting (Vercel Hobby)</span><span class="summary-row-val">$0</span></div>
+          <div class="summary-row"><span>Railway (Hobby)</span><span class="summary-row-val">$5</span></div>
+          <div class="summary-row"><span>Upstash Redis (Free)</span><span class="summary-row-val">$0</span></div>
+          <div class="summary-row"><span>Groq LLM (Free tier)</span><span class="summary-row-val">$0</span></div>
+          <div class="summary-row"><span>Domain (.app)</span><span class="summary-row-val">~$14/yr</span></div>
+          <div class="summary-row"><span>Clerk Auth (Free tier)</span><span class="summary-row-val">$0</span></div>
+          <div class="summary-row"><span>MapTiler (Free)</span><span class="summary-row-val">$0</span></div>
+        </div>
+      </div>
+
+      <div class="summary-card" style="border-top: 4px solid var(--amber)">
+        <div class="summary-phase" style="color:var(--amber)">Phase 02</div>
+        <div class="summary-name">Beta Launch</div>
+        <div class="summary-amount" style="color:var(--amber)">$47–120</div>
+        <div class="summary-period">per month · Weeks 5–10</div>
+        <div class="summary-breakdown">
+          <div class="summary-row"><span>Vercel Pro</span><span class="summary-row-val">$20</span></div>
+          <div class="summary-row"><span>Railway Pro</span><span class="summary-row-val">$20</span></div>
+          <div class="summary-row"><span>Upstash Redis (PAYG)</span><span class="summary-row-val">~$5</span></div>
+          <div class="summary-row"><span>Groq LLM (~50K calls)</span><span class="summary-row-val">~$5</span></div>
+          <div class="summary-row"><span>MapTiler (Cloud)</span><span class="summary-row-val">$20</span></div>
+          <div class="summary-row"><span>MarineTraffic API</span><span class="summary-row-val">$0–50</span></div>
+          <div class="summary-row"><span>Clerk Auth (Free)</span><span class="summary-row-val">$0</span></div>
+        </div>
+      </div>
+
+      <div class="summary-card" style="border-top: 4px solid var(--green)">
+        <div class="summary-phase" style="color:var(--green)">Phase 03</div>
+        <div class="summary-name">Growth</div>
+        <div class="summary-amount" style="color:var(--green)">$200–450</div>
+        <div class="summary-period">per month · Weeks 11–16</div>
+        <div class="summary-breakdown">
+          <div class="summary-row"><span>Vercel Pro</span><span class="summary-row-val">$20</span></div>
+          <div class="summary-row"><span>Railway Pro</span><span class="summary-row-val">$20–60</span></div>
+          <div class="summary-row"><span>Upstash (1GB fixed)</span><span class="summary-row-val">$10</span></div>
+          <div class="summary-row"><span>Groq LLM (high vol)</span><span class="summary-row-val">$20–50</span></div>
+          <div class="summary-row"><span>Clerk Pro (~50 users)</span><span class="summary-row-val">$25</span></div>
+          <div class="summary-row"><span>Paid APIs (Marine/Avia)</span><span class="summary-row-val">$50–100</span></div>
+          <div class="summary-row"><span>Monitoring (Sentry)</span><span class="summary-row-val">$26</span></div>
+        </div>
+      </div>
+
+      <div class="summary-card" style="border-top: 4px solid var(--enterprise)">
+        <div class="summary-phase" style="color:var(--enterprise)">Phase 04</div>
+        <div class="summary-name">Scale / Commercial</div>
+        <div class="summary-amount" style="color:var(--enterprise)">$400–800</div>
+        <div class="summary-period">per month · Weeks 17–22+</div>
+        <div class="summary-breakdown">
+          <div class="summary-row"><span>Vercel Pro / Enterprise</span><span class="summary-row-val">$20–400</span></div>
+          <div class="summary-row"><span>Railway Pro (heavy)</span><span class="summary-row-val">$60–150</span></div>
+          <div class="summary-row"><span>Upstash 5GB fixed</span><span class="summary-row-val">$40</span></div>
+          <div class="summary-row"><span>Groq + OpenRouter</span><span class="summary-row-val">$50–150</span></div>
+          <div class="summary-row"><span>Clerk Pro (500 users)</span><span class="summary-row-val">$25–100</span></div>
+          <div class="summary-row"><span>All paid APIs</span><span class="summary-row-val">$100–250</span></div>
+          <div class="summary-row"><span>Security + monitoring</span><span class="summary-row-val">$50–100</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 1: HOSTING -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">01 —</span><span class="section-title">Hosting & Compute</span></div>
+      <div class="section-total">$0 → $20 → $400+/mo</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">Service</th>
+          <th style="width:28%">What It Does</th>
+          <th>MVP</th>
+          <th>Growth</th>
+          <th>Scale</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">Vercel <span class="badge badge-paid">Primary</span></div><div class="item-detail">Frontend + 60+ API proxy functions. Fluid Compute (Active CPU billing). CDN, analytics.</div></td>
+          <td><div class="item-detail">Hosts your React app + all edge API proxy functions (USGS, NOAA, ACLED etc). CDN for global speed.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Hobby plan</div></td>
+          <td class="cost-low">$20/mo<div class="item-detail">Pro plan</div></td>
+          <td class="cost-mid">$20–400/mo<div class="item-detail">Pro → Enterprise</div></td>
+          <td><div class="item-detail">Pro includes 1TB bandwidth, 40 CPU hrs/mo. Overage: $2/M Edge Requests, $0.15/GB bandwidth. Enterprise from ~$400/mo for guaranteed SLAs.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Railway.app <span class="badge badge-paid">Backend</span></div><div class="item-detail">WebSocket relay, RSS daemons, ACLED/GDELT polling, LLM queue workers.</div></td>
+          <td><div class="item-detail">Long-running services that Vercel's serverless can't handle. WebSocket push to browser for live AIS, FIRMS fire alerts.</div></td>
+          <td class="cost-zero">$5/mo<div class="item-detail">Hobby ($5 included credit)</div></td>
+          <td class="cost-low">$20/mo<div class="item-detail">Pro + ~$20 usage</div></td>
+          <td class="cost-mid">$60–150/mo<div class="item-detail">Pro + heavy usage</div></td>
+          <td><div class="item-detail">Railway bills by actual CPU/RAM utilization per minute — idle services cost almost nothing. Pro plan: 32GB RAM, 32 vCPU per service max.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Domain Name <span class="badge badge-one-time">One-Time/Annual</span></div><div class="item-detail">e.g. irip.app or insurisk.io</div></td>
+          <td><div class="item-detail">Your platform's URL. .app domains are HTTPS-enforced by default.</div></td>
+          <td class="cost-zero">$14/yr<div class="item-detail">.app TLD</div></td>
+          <td class="cost-zero">$14/yr</td>
+          <td class="cost-zero">$14/yr</td>
+          <td><div class="item-detail">Buy via Cloudflare Registrar (cost price, no markup). Alternatively .io ($35/yr), .com ($10–15/yr).</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">SSL / TLS</div><div class="item-detail">HTTPS certificates</div></td>
+          <td><div class="item-detail">Vercel auto-provisions Let's Encrypt certs. Zero cost.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Included with Vercel on all plans.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>HOSTING SUBTOTAL</td><td colspan="5">MVP: ~$5/mo · Growth: ~$40/mo · Scale: ~$175/mo</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 2: CACHING -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">02 —</span><span class="section-title">Caching & Database</span></div>
+      <div class="section-total">$0 → $10 → $40/mo</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">Service</th>
+          <th style="width:28%">What It Does</th>
+          <th>MVP</th>
+          <th>Growth</th>
+          <th>Scale</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">Upstash Redis <span class="badge badge-free">Free Tier Available</span></div><div class="item-detail">Serverless Redis for warm cache layer. Cross-user AI deduplication.</div></td>
+          <td><div class="item-detail">Stores cached API responses (15s–6h TTL per source). Prevents redundant upstream calls. Reduces Vercel Function invocations by ~80%.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">500K cmds/mo free</div></td>
+          <td class="cost-low">~$5/mo<div class="item-detail">PAYG ~$0.2/100K cmds</div></td>
+          <td class="cost-mid">$10–40/mo<div class="item-detail">250MB–1GB fixed plan</div></td>
+          <td><div class="item-detail">New pricing (March 2025): 500K commands/month free, 200GB bandwidth free. Fixed plans from $10/mo (250MB). PAYG available at $0.2 per 100K commands after free tier.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">IndexedDB (Browser) <span class="badge badge-free">Free</span></div><div class="item-detail">Client-side vector store for 5K event embeddings. RAG search.</div></td>
+          <td><div class="item-detail">Stores ONNX embedding vectors per headline. Semantic search runs in-browser — zero server cost. LRU eviction at 5K cap.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Browser storage — no server, no cost. Storage limit ~50MB per origin in modern browsers (more than enough for 5K × 384-dim float32 vectors ≈ 7.5MB).</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">In-Memory Cache <span class="badge badge-free">Free</span></div><div class="item-detail">Hot cache in Edge Function memory. ~100ms responses for repeat requests.</div></td>
+          <td><div class="item-detail">First tier of the 3-tier cache. Key:value store in Vercel Edge Function memory. TTL: 15–60s. Zero cost.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Included in Vercel Function runtime. No separate charge.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>CACHING SUBTOTAL</td><td colspan="5">MVP: $0/mo · Growth: ~$5/mo · Scale: ~$25/mo</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 3: AI / LLM -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">03 —</span><span class="section-title">AI / LLM Inference</span></div>
+      <div class="section-total">$0 → $5 → $150/mo</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">Service / Model</th>
+          <th style="width:28%">Role in Platform</th>
+          <th>MVP</th>
+          <th>Growth</th>
+          <th>Scale</th>
+          <th>Pricing Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">Transformers.js (ONNX) <span class="badge badge-free">Free · In-Browser</span></div><div class="item-detail">all-MiniLM-L6-v2, 384-dim embeddings. Runs in Web Worker. NER for entity extraction.</div></td>
+          <td><div class="item-detail">Powers the semantic search and RAG system. Every headline gets embedded locally — no API call, no cost. Also handles fast-path classification.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Open-source, runs entirely in the browser via WebAssembly. Model size ~23MB (downloads once, cached by Service Worker).</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Groq — Llama 3.1 8B <span class="badge badge-free">Free Tier</span></div><div class="item-detail">Primary LLM for risk narrative generation, ambiguous event classification.</div></td>
+          <td><div class="item-detail">Called only when ONNX fast-path is uncertain (async override) or user requests AI-generated risk summary. With caching, ~500–5K calls/month.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Free tier available</div></td>
+          <td class="cost-low">~$2–10/mo<div class="item-detail">Low volume</div></td>
+          <td class="cost-mid">$20–80/mo<div class="item-detail">High volume</div></td>
+          <td><div class="item-detail">$0.05/M input tokens, $0.08/M output tokens. 1M tokens ≈ ~750K words. At 500 calls/day × avg 500 tokens each = 250M tokens/month ≈ $12.50 input + $20 output = ~$32. Batch API = 50% discount.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">OpenRouter <span class="badge badge-optional">Optional Fallback</span></div><div class="item-detail">Fallback when Groq is rate-limited. Routes to cheapest available model.</div></td>
+          <td><div class="item-detail">Only activates when Groq fails or is rate-limited. Budget cap settable at $5–10/mo max.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0–5/mo</td>
+          <td class="cost-low">$5–20/mo</td>
+          <td><div class="item-detail">Pay-as-you-go per token. Use Llama 3.1 8B via OpenRouter at ~$0.04/M tokens. Set a hard budget cap to avoid surprises.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Ollama (Local) <span class="badge badge-free">Free · Optional</span></div><div class="item-detail">Local LLM for Tauri desktop app. Air-gapped mode for sensitive underwriting work.</div></td>
+          <td><div class="item-detail">Desktop-only. Runs Llama 3.1 8B on user's hardware. Zero API cost. Requires GPU or M-series Mac for decent performance.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Free open-source software. User bears compute cost (their own hardware). Enables offline/air-gapped mode for Lloyd's market users.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>AI SUBTOTAL</td><td colspan="5">MVP: $0/mo · Growth: ~$15/mo · Scale: ~$80/mo</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 4: AUTH -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">04 —</span><span class="section-title">Authentication & Security</span></div>
+      <div class="section-total">$0 → $25 → $125/mo</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">Service</th>
+          <th style="width:28%">Role</th>
+          <th>MVP</th>
+          <th>Growth</th>
+          <th>Scale</th>
+          <th>Pricing Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">Clerk Auth <span class="badge badge-free">Free up to 10K MAU</span></div><div class="item-detail">User management, SSO, org/team support, pre-built login UI. React SDK.</div></td>
+          <td><div class="item-detail">Handles login, MFA, org tenancy (per insurance client), session management. Pre-built React components = no custom auth code.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Free ≤10K MAU</div></td>
+          <td class="cost-zero">$0–25/mo<div class="item-detail">Free → Pro at 10K</div></td>
+          <td class="cost-mid">$25–125/mo<div class="item-detail">Pro + add-ons</div></td>
+          <td><div class="item-detail">Free: 10,000 MAU, 100 orgs. Pro: $25/mo base + $0.02/MAU after 10K. Enhanced Auth add-on (MFA, SAML) = +$100/mo. B2B suite = +$100/mo. First day free for new signups — no charge for same-day churn.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">API Key Vault <span class="badge badge-free">Free</span></div><div class="item-detail">Vercel Environment Secrets. API keys never shipped to browser.</div></td>
+          <td><div class="item-detail">All upstream API keys (USGS, NOAA, ACLED, Groq etc) stored server-side in Vercel env vars. Rotated quarterly.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Included with all Vercel plans. No separate secrets management needed at this scale.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Cloudflare (Free plan) <span class="badge badge-free">Free</span></div><div class="item-detail">DDoS protection, WAF, bot mitigation. Optional reverse proxy.</div></td>
+          <td><div class="item-detail">Adds a security layer in front of Vercel. Also provides Radar API (free) for internet outage data used in the Cyber insurance layer.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Cloudflare Free plan includes unlimited DDoS mitigation, basic WAF, and Radar API access. Pro plan ($20/mo) for enhanced WAF rules if needed.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>AUTH/SECURITY SUBTOTAL</td><td colspan="5">MVP: $0/mo · Growth: $0–25/mo · Scale: $25–225/mo</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 5: DATA APIs -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">05 —</span><span class="section-title">Data APIs — Free Tier (Core, Always On)</span></div>
+      <div class="section-total">$0/mo · All Free</div>
+    </div>
+
+    <div class="assumptions" style="border-left-color: var(--green)">
+      <div class="assumptions-title">These are ALL free — no cost at any scale</div>
+      <ul class="assumptions-list">
+        <li>USGS Earthquake API — earthquake.usgs.gov — unlimited, public domain</li>
+        <li>NASA EONET — eonet.gsfc.nasa.gov — free, no key required</li>
+        <li>NASA FIRMS (VIIRS wildfire) — firms.modaps.eosdis.nasa.gov — free key</li>
+        <li>GDACS disaster alerts — gdacs.org/gdacsapi — free</li>
+        <li>NOAA NWS API — api.weather.gov — free, no key required</li>
+        <li>OpenFEMA / NFIP — openfema.gov/api — free, no key</li>
+        <li>GDELT 2.0 — gdeltproject.org — free, no key, 15-min updates</li>
+        <li>UN OCHA HAPI — hapi.humdata.org — free with registration</li>
+        <li>UCDP Uppsala Conflict — ucdp.uu.se/apidocs — free</li>
+        <li>OFAC Sanctions list — treasury.gov — free JSON download</li>
+        <li>Polymarket API — polymarket.com — free</li>
+        <li>OpenSky Network — opensky-network.org — free, 400 req/day anon, more with account</li>
+        <li>FAA NOTAM API — notams.aim.faa.gov — free</li>
+        <li>GPSJam.org — free heatmap data</li>
+        <li>IMO GISIS — gisis.imo.org — free</li>
+        <li>USCG NAIS (AIS) — free for US coastal waters</li>
+        <li>abuse.ch Feodo Tracker — feodotracker.abuse.ch — free</li>
+        <li>AlienVault OTX — otx.alienvault.com — free with account</li>
+        <li>CISA KEV catalog — cisa.gov — free JSON feed</li>
+        <li>CIRCL CVE Search — cve.circl.lu — free</li>
+        <li>Cloudflare Radar API — radar.cloudflare.com — free with account</li>
+        <li>Ransomware.live — ransomware.live/api — free</li>
+        <li>FRED (Federal Reserve) — fred.stlouisfed.org — free API key</li>
+        <li>EIA Energy data — eia.gov/opendata — free API key</li>
+        <li>ICC-IMB Piracy Portal — icc-ccs.org — free RSS</li>
+        <li>ASN Aviation Safety Network — free RSS feed</li>
+        <li>ARTEMIS ILS/cat bond news — artemis.bm — free RSS</li>
+        <li>Copernicus EMS — effis.jrc.ec.europa.eu — free</li>
+      </ul>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">API / Source</th>
+          <th style="width:28%">Insurance Layer</th>
+          <th>Rate Limit (Free)</th>
+          <th>Cost</th>
+          <th colspan="2">Action Required</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">ACLED <span class="badge badge-free">Non-Commercial</span></div><div class="item-detail">Armed conflict event data — 300+ event types, fatalities, actor classification</div></td>
+          <td><div class="item-detail">Political Risk / War Exclusions layer. Country instability index input.</div></td>
+          <td><div class="item-detail">500 events/month free non-commercial. Unlimited for academic.</div></td>
+          <td class="cost-zero">$0 (non-comm)</td>
+          <td colspan="2"><div class="item-detail">Register at acleddata.com. Must agree to non-commercial terms. For commercial use: contact ACLED for pricing. Estimated $200–500/mo for commercial license.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Yahoo Finance <span class="badge badge-free">Unofficial</span></div><div class="item-detail">Stock prices, forex, crypto. Reinsurance equities (RNR, AXS, MRH).</div></td>
+          <td><div class="item-detail">Macro / Financial Lines layer. Reinsurer stock sentiment as market signal.</div></td>
+          <td><div class="item-detail">Unofficial — no official limit documented. May break without notice.</div></td>
+          <td class="cost-zero">$0*</td>
+          <td colspan="2"><div class="item-detail">Use via yfinance Python library or yahoofinance.io. No official API. Consider Alpha Vantage (free tier 25 calls/day) or Finnhub (free tier) as resilient alternatives.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">MarineTraffic <span class="badge badge-optional">Freemium</span></div><div class="item-detail">AIS vessel positions, port calls, ETA data.</div></td>
+          <td><div class="item-detail">Marine & Cargo layer. Vessel tracking, chokepoint monitoring.</div></td>
+          <td><div class="item-detail">50 API calls/day free. Very limited.</div></td>
+          <td class="cost-zero">$0 (50 calls/day)</td>
+          <td colspan="2"><div class="item-detail">MVP: use free tier + scrape MarineTraffic web. Growth: upgrade to Basic API ($49–149/mo). Alternative: VesselFinder (free tier), or use USCG NAIS for US waters at no cost.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">AviationStack <span class="badge badge-optional">Freemium</span></div><div class="item-detail">Flight status, delays, cancellations, airline/airport data.</div></td>
+          <td><div class="item-detail">Aviation & Travel layer. Delay risk, route disruption signals.</div></td>
+          <td><div class="item-detail">500 API calls/month free tier.</div></td>
+          <td class="cost-zero">$0 (500/mo)</td>
+          <td colspan="2"><div class="item-detail">Free tier sufficient for MVP. Growth: $29/mo (10K calls). OpenSky is free with no limit for raw ADS-B position data — use that for flight tracking.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">AbuseIPDB <span class="badge badge-optional">Freemium</span></div><div class="item-detail">IP reputation, abuse reports. C2 detection.</div></td>
+          <td><div class="item-detail">Cyber insurance layer. IP reputation for insured entity assessment.</div></td>
+          <td><div class="item-detail">1,000 checks/day free.</div></td>
+          <td class="cost-zero">$0 (1K/day)</td>
+          <td colspan="2"><div class="item-detail">Free tier sufficient for MVP. Basic plan: $20/mo for 5K checks/day. Can be replaced by AlienVault OTX which is fully free.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Stormglass.io <span class="badge badge-optional">Freemium</span></div><div class="item-detail">Marine weather: wave height, swell, wind, precipitation.</div></td>
+          <td><div class="item-detail">Marine routing risk layer. Storm exposure for vessel voyages.</div></td>
+          <td><div class="item-detail">10 API calls/day free.</div></td>
+          <td class="cost-zero">$0 (10/day)</td>
+          <td colspan="2"><div class="item-detail">MVP: use free tier (very limited). Growth: $39/mo. Alternative: Open-Meteo Marine API (fully free, unlimited) provides wave height, swell period — excellent free substitute.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>FREE API SUBTOTAL</td><td colspan="5">$0/mo at MVP · Free tier covers all core functionality</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 6: PAID APIs -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">06 —</span><span class="section-title">Paid APIs — Growth & Scale Only</span></div>
+      <div class="section-total">$0 → $50 → $300+/mo</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">API / Service</th>
+          <th style="width:28%">Why You'd Pay</th>
+          <th>MVP</th>
+          <th>Growth</th>
+          <th>Scale</th>
+          <th>Pricing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">ACLED Commercial <span class="badge badge-paid">Paid at Scale</span></div><div class="item-detail">Unlimited political conflict data for commercial product.</div></td>
+          <td><div class="item-detail">Once you're charging insurance clients, ACLED non-commercial terms no longer apply. Must upgrade to commercial license.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Non-commercial</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Non-commercial</div></td>
+          <td class="cost-high">~$200–500/mo<div class="item-detail">Commercial license</div></td>
+          <td><div class="item-detail">Contact ACLED for commercial pricing. Budget $200–500/mo. Alternative: GDELT (free, always) covers most conflict events with 15-min updates — may be sufficient.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">MapTiler Cloud <span class="badge badge-optional">Recommended</span></div><div class="item-detail">Commercial map tiles for MapLibre GL. OpenStreetMap-based.</div></td>
+          <td><div class="item-detail">MapLibre GL needs a tile server. MapTiler provides commercial-grade OSM tiles, terrain, satellite. Free tier for dev, paid for production.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Free: 100K tiles/mo</div></td>
+          <td class="cost-low">$20/mo<div class="item-detail">Cloud plan</div></td>
+          <td class="cost-mid">$60–200/mo<div class="item-detail">Business plan</div></td>
+          <td><div class="item-detail">Free: 100K tile requests/month. Cloud: $20/mo (500K tiles). Business: $60/mo (2M tiles). Alternative: use free OSM tiles from OpenStreetMap directly (no SLA) or Protomaps (self-host tiles, one-time cost).</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Spire Maritime (Satellite AIS) <span class="badge badge-paid">Optional</span></div><div class="item-detail">Global satellite AIS for vessels beyond coastal coverage.</div></td>
+          <td><div class="item-detail">Coastal AIS (USCG free) misses ~60% of global ocean. Spire/ORBCOMM provide satellite AIS for full global coverage needed for marine cargo.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0<div class="item-detail">Use USCG + MarineTraffic free</div></td>
+          <td class="cost-high">$200–2,000/mo<div class="item-detail">Depends on coverage</div></td>
+          <td><div class="item-detail">Enterprise pricing only — contact Spire. Alternative for MVP/Growth: VesselFinder free tier + MarineTraffic Basic ($49/mo). Exact satellite AIS is only needed for blue-water marine coverage.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Moody's Location Intelligence <span class="badge badge-paid">Enterprise</span></div><div class="item-detail">100M+ US property scores: flood, quake, wildfire, wind peril ratings.</div></td>
+          <td><div class="item-detail">Point-of-underwriting property risk API. Returns peril scores for any address. Only needed when building underwriting workflow integration.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-high">Contact for pricing<div class="item-detail">Likely $500–5,000/mo</div></td>
+          <td><div class="item-detail">Premium commercial API. Start with free FEMA NFHL flood zones + CAL FIRE FHSZ (free) for MVP. Moody's only if building underwriting pricing workflows for carrier clients.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Shodan / Censys <span class="badge badge-paid">Cyber Layer</span></div><div class="item-detail">Exposed asset discovery. Find insured entities' internet-facing infrastructure.</div></td>
+          <td><div class="item-detail">Cyber insurance underwriting: assess exposed ports, services, CVEs for a company being underwritten. Deep product feature.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-mid">$69–899/mo<div class="item-detail">Shodan plans</div></td>
+          <td><div class="item-detail">Shodan: $69/mo Individual, $899/mo Corporate. Censys: contact for pricing. Only needed for advanced cyber underwriting feature — not required for the monitoring layer.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">PRS Group / Oxford Analytica <span class="badge badge-paid">Enterprise</span></div><div class="item-detail">Country risk ratings. Political stability scores.</div></td>
+          <td><div class="item-detail">Supplement ACLED + GDELT with curated analyst-rated country risk scores for political risk underwriting. Premium signal.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-high">~$1,000–5,000/mo<div class="item-detail">Enterprise only</div></td>
+          <td><div class="item-detail">Contact for pricing. Defer entirely — ACLED + GDELT + UCDP + Polymarket provides sufficient political risk signal for most use cases at zero cost.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Alpha Vantage / Finnhub <span class="badge badge-optional">Optional</span></div><div class="item-detail">Reliable stock/forex data API. Stable alternative to Yahoo Finance.</div></td>
+          <td><div class="item-detail">Reinsurer stock prices, commodity prices, FX rates. Yahoo Finance is unofficial and can break; these are stable APIs with SLAs.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Free tiers</div></td>
+          <td class="cost-low">$0–30/mo</td>
+          <td class="cost-low">$30–50/mo</td>
+          <td><div class="item-detail">Alpha Vantage: free 25 calls/day, $50/mo for 600 calls/min. Finnhub: free 60 calls/min for stocks. Start with free tiers.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>PAID APIs SUBTOTAL</td><td colspan="5">MVP: $0/mo · Growth: $20–70/mo · Scale: $100–600/mo (most optional)</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 7: TOOLING -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">07 —</span><span class="section-title">Dev Tooling, Monitoring & Miscellaneous</span></div>
+      <div class="section-total">$0 → $26 → $100/mo</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">Tool</th>
+          <th style="width:28%">Purpose</th>
+          <th>MVP</th>
+          <th>Growth</th>
+          <th>Scale</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">GitHub <span class="badge badge-free">Free</span></div><div class="item-detail">Source control, CI/CD via GitHub Actions, PR reviews.</div></td>
+          <td><div class="item-detail">Version control + automated deployment pipeline. Actions free for public repos, 2,000 min/mo for private.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0–4/mo<div class="item-detail">Team plan</div></td>
+          <td><div class="item-detail">GitHub Free: unlimited public repos, 2,000 Actions minutes/mo. Team: $4/user/mo. Solo developer: Free plan is more than enough.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Sentry <span class="badge badge-optional">Recommended</span></div><div class="item-detail">Error tracking, performance monitoring, alerting.</div></td>
+          <td><div class="item-detail">Catches runtime errors in Edge Functions and browser. Essential for production reliability. Free tier: 5K errors/mo.</div></td>
+          <td class="cost-zero">$0<div class="item-detail">Free: 5K errors</div></td>
+          <td class="cost-low">$26/mo<div class="item-detail">Team plan</div></td>
+          <td class="cost-low">$26/mo</td>
+          <td><div class="item-detail">Free tier: 5K errors, 10K transactions/mo. Team: $26/mo for 50K errors. Alternative: Vercel has built-in basic error logging. Use Sentry only once in production.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">buf CLI + Protobuf <span class="badge badge-free">Free</span></div><div class="item-detail">Protocol Buffer schema management. buf lint + breaking checks.</div></td>
+          <td><div class="item-detail">Maintains the 92-proto schema discipline. Generates TypeScript types from .proto files. buf.build free for public schemas.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">buf CLI is open source. buf.build schema registry is free for public. Private schemas: $20/mo. You may not need Protobuf for MVP — start with JSON/TypeScript interfaces and migrate later.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Vercel Analytics <span class="badge badge-free">Included</span></div><div class="item-detail">Privacy-first web vitals, page view tracking.</div></td>
+          <td><div class="item-detail">Understand how users navigate the platform. Included with all Vercel plans.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Included with Vercel Hobby and Pro plans. No additional cost.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Open-Meteo Marine <span class="badge badge-free">Free</span></div><div class="item-detail">Marine weather API — wave height, swell, wind. Unlimited calls.</div></td>
+          <td><div class="item-detail">Free alternative to Stormglass. Unlimited API calls. Powers the marine routing risk layer for wave/storm exposure.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Fully free, no API key required. Replaces Stormglass freemium entirely. Covers global marine weather forecasts and hindcasts.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Postman / Hoppscotch <span class="badge badge-free">Free</span></div><div class="item-detail">API testing during development.</div></td>
+          <td><div class="item-detail">Test all 40+ upstream API integrations. Hoppscotch is free open-source alternative.</div></td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td class="cost-zero">$0</td>
+          <td><div class="item-detail">Use Hoppscotch (free, open-source) or Postman free tier. No cost.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>TOOLING SUBTOTAL</td><td colspan="5">MVP: $0/mo · Growth: $26/mo · Scale: $26–50/mo</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- SECTION 8: ONE-TIME COSTS -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">08 —</span><span class="section-title">One-Time / Setup Costs</span></div>
+      <div class="section-total">~$14–200 total</div>
+    </div>
+
+    <table class="ledger">
+      <thead>
+        <tr>
+          <th style="width:22%">Item</th>
+          <th style="width:40%">Details</th>
+          <th>Cost</th>
+          <th colspan="2">Timing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="item-name">Domain Registration <span class="badge badge-one-time">Annual</span></div></td>
+          <td><div class="item-detail">irip.app or insurisk.io via Cloudflare Registrar (cost price). .app enforces HTTPS.</div></td>
+          <td class="cost-zero">$14/yr</td>
+          <td colspan="2"><div class="item-detail">Day 1</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">ONNX Model Download <span class="badge badge-free">Free</span></div></td>
+          <td><div class="item-detail">all-MiniLM-L6-v2 from HuggingFace. ~23MB. Downloaded once by users, cached by Service Worker.</div></td>
+          <td class="cost-zero">$0</td>
+          <td colspan="2"><div class="item-detail">Build time</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">Protomaps Planet File <span class="badge badge-one-time">Optional One-Time</span></div></td>
+          <td><div class="item-detail">Self-host entire OSM planet as a single .pmtiles file. Eliminates MapTiler costs entirely. ~120GB storage needed (R2 or S3).</div></td>
+          <td class="cost-low">$0–50/yr<div class="item-detail">Cloudflare R2 storage</div></td>
+          <td colspan="2"><div class="item-detail">One-time setup. Saves $20–200/mo in MapTiler fees at scale.</div></td>
+        </tr>
+        <tr>
+          <td><div class="item-name">API Account Registrations <span class="badge badge-free">Free</span></div></td>
+          <td><div class="item-detail">ACLED, NASA FIRMS, OpenSky, AlienVault OTX, FRED, Groq, AviationStack, AbuseIPDB, Upstash, Railway, Vercel, Clerk, MapTiler accounts.</div></td>
+          <td class="cost-zero">$0</td>
+          <td colspan="2"><div class="item-detail">Week 1. All free to register.</div></td>
+        </tr>
+      </tbody>
+      <tfoot>
+        <tr><td>ONE-TIME SUBTOTAL</td><td colspan="4">~$14–64 total first year</td></tr>
+      </tfoot>
+    </table>
+  </section>
+
+  <!-- FULL COST COMPARISON TABLE -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">09 —</span><span class="section-title">Full Monthly Cost Comparison by Phase</span></div>
+      <div class="section-total">At-a-Glance</div>
+    </div>
+
+    <div class="compare-grid">
+      <div class="cg-header" style="text-align:left">Category</div>
+      <div class="cg-header" style="background:#8b0000">MVP<br><span style="font-size:8px;color:#ccc">Wks 1–4</span></div>
+      <div class="cg-header" style="background:#8b4000">Beta<br><span style="font-size:8px;color:#ccc">Wks 5–10</span></div>
+      <div class="cg-header" style="background:#0d4a1f">Growth<br><span style="font-size:8px;color:#ccc">Wks 11–16</span></div>
+      <div class="cg-header" style="background:#0a2550">Scale<br><span style="font-size:8px;color:#ccc">Wks 17+</span></div>
+
+      <div class="cg-row-label">Vercel (Frontend + API)</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell">$20</div>
+      <div class="cg-cell">$20</div>
+      <div class="cg-cell cost-mid">$20–400</div>
+
+      <div class="cg-row-label">Railway (Backend / WS)</div>
+      <div class="cg-cell">$5</div>
+      <div class="cg-cell">$20</div>
+      <div class="cg-cell">$20–60</div>
+      <div class="cg-cell cost-mid">$60–150</div>
+
+      <div class="cg-row-label">Upstash Redis (Cache)</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell">~$5</div>
+      <div class="cg-cell">$10</div>
+      <div class="cg-cell">$10–40</div>
+
+      <div class="cg-row-label">Groq LLM + OpenRouter</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell">~$5</div>
+      <div class="cg-cell">$15–30</div>
+      <div class="cg-cell cost-mid">$50–150</div>
+
+      <div class="cg-row-label">Clerk Auth</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell">$0–25</div>
+      <div class="cg-cell">$25–125</div>
+
+      <div class="cg-row-label">Map Tiles (MapTiler)</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0–20</div>
+      <div class="cg-cell">$20</div>
+      <div class="cg-cell">$20–60</div>
+
+      <div class="cg-row-label">Data APIs (all free tiers)</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0</div>
+
+      <div class="cg-row-label">Paid APIs (Marine, Avia)</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell">$0–100</div>
+      <div class="cg-cell cost-mid">$50–300</div>
+
+      <div class="cg-row-label">Monitoring (Sentry)</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell cost-zero">$0</div>
+      <div class="cg-cell">$26</div>
+      <div class="cg-cell">$26</div>
+
+      <div class="cg-row-label">Domain (annual ÷ 12)</div>
+      <div class="cg-cell">$1.20</div>
+      <div class="cg-cell">$1.20</div>
+      <div class="cg-cell">$1.20</div>
+      <div class="cg-cell">$1.20</div>
+
+      <div class="cg-row-label" style="background:var(--ink);color:white;font-size:13px">TOTAL / MONTH</div>
+      <div class="cg-cell highlight" style="background:#8b0000;color:#ffd;font-size:14px">~$6–47</div>
+      <div class="cg-cell highlight" style="background:#8b4000;color:#ffd;font-size:14px">~$47–120</div>
+      <div class="cg-cell highlight" style="background:#0d4a1f;color:#aeffcb;font-size:14px">~$110–270</div>
+      <div class="cg-cell highlight" style="background:#0a2550;color:#a8c4ff;font-size:14px">~$250–800</div>
+
+      <div class="cg-row-label" style="background:var(--paper3)">ANNUAL ESTIMATE</div>
+      <div class="cg-cell" style="font-size:13px;font-weight:700">~$72–560</div>
+      <div class="cg-cell" style="font-size:13px;font-weight:700">~$560–1,440</div>
+      <div class="cg-cell" style="font-size:13px;font-weight:700">~$1,320–3,240</div>
+      <div class="cg-cell" style="font-size:13px;font-weight:700">~$3,000–9,600</div>
+    </div>
+  </section>
+
+  <!-- RISK & COST OPTIMIZATION -->
+  <section>
+    <div class="section-head">
+      <div><span class="section-num">10 —</span><span class="section-title">Cost Optimization Strategies</span></div>
+    </div>
+
+    <div class="opt-grid">
+      <div class="opt-card">
+        <div class="opt-title">🧠 Maximize Browser-Side AI <span class="opt-saving">Saves $50–100/mo</span></div>
+        <div class="opt-desc">ONNX Transformers.js runs embeddings and basic classification in the browser — free. Only call Groq for narrative generation (1–3% of events). With prompt caching + dedup via Redis, LLM costs stay under $20/mo even at scale.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">🗄️ Aggressive Caching <span class="opt-saving">Saves 80% on API calls</span></div>
+        <div class="opt-desc">Set s-maxage headers correctly per source: USGS (30s), NOAA (60s), GDELT (15min), ACLED (6h). Upstash Redis warm cache reduces upstream calls by ~80%, keeping Vercel Function invocations well within free/Pro limits.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">🗺️ Self-Host Map Tiles <span class="opt-saving">Saves $20–200/mo</span></div>
+        <div class="opt-desc">Use Protomaps + a single .pmtiles file on Cloudflare R2 ($0.015/GB/mo). 120GB planet file costs ~$1.80/mo in storage vs $20–200/mo in MapTiler fees. One-time setup effort; massive long-term savings.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">✈️ OpenSky over AviationStack <span class="opt-saving">Saves $29+/mo</span></div>
+        <div class="opt-desc">OpenSky provides unlimited free ADS-B flight tracking for monitoring. Use AviationStack only if you need commercial flight status/delay data. For the risk monitoring layer, raw ADS-B positions are sufficient.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">🌊 Open-Meteo over Stormglass <span class="opt-saving">Saves $39/mo</span></div>
+        <div class="opt-desc">Open-Meteo Marine API provides unlimited wave height, swell, wind data for free. Completely replaces Stormglass ($39–199/mo) for the marine routing risk layer. Same data quality for monitoring purposes.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">🚢 GDELT as ACLED substitute <span class="opt-saving">Saves $200–500/mo</span></div>
+        <div class="opt-desc">GDELT covers 300+ event types globally, updates every 15 minutes, and is 100% free forever — no commercial licensing. For a monitoring dashboard (vs academic research), GDELT + UCDP + Polymarket covers political risk without ACLED's commercial fee.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">📦 Groq Batch API <span class="opt-saving">50% discount</span></div>
+        <div class="opt-desc">For non-urgent LLM classification (e.g., batch-processing the overnight GDELT dump), use Groq's Batch API for 50% off. Only use real-time API for time-sensitive events. Prompt caching also reduces cost for repetitive system prompts.</div>
+      </div>
+      <div class="opt-card">
+        <div class="opt-title">🔐 Defer Enterprise Auth <span class="opt-saving">Saves $100–225/mo</span></div>
+        <div class="opt-desc">Clerk's free tier covers 10,000 MAU with no MFA add-on required at MVP stage. Defer the Enhanced Auth add-on (+$100/mo) until enterprise clients demand SSO/SAML. Use Clerk's built-in TOTP (free) for basic MFA.</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="section-head" style="margin-top: 32px">
+      <div><span class="section-title" style="font-size:18px">Budget Risk Factors</span></div>
+    </div>
+    <div class="risk-grid">
+      <div class="risk-item">
+        <strong>⚠️ Vercel Overage Spikes</strong>
+        <span>If a major cat event causes traffic spikes, Edge Request overages ($2/M) can accumulate fast. Set Vercel's spend management budget cap at $50–100/mo to auto-pause. Fix: aggressive CDN caching reduces requests by 90%.</span>
+      </div>
+      <div class="risk-item">
+        <strong>⚠️ ACLED Commercial Licensing</strong>
+        <span>The moment you charge clients, ACLED non-commercial terms no longer apply. Budget $200–500/mo for commercial license or replace entirely with GDELT (free forever, no commercial restriction).</span>
+      </div>
+      <div class="risk-item">
+        <strong>⚠️ LLM Token Runaway</strong>
+        <span>If every event triggers an LLM call without deduplication, costs explode. Solution: in-memory dedup + Redis cross-user dedup ensures the same headline is only classified once. Set hard Groq monthly budget cap.</span>
+      </div>
+      <div class="risk-item">
+        <strong>⚠️ Railway Memory Overflow</strong>
+        <span>WebSocket relay keeping many concurrent connections can spike memory. Railway bills by utilization — monitor usage dashboard. Set auto-restart on OOM. Hobby plan caps at 8GB RAM max.</span>
+      </div>
+      <div class="risk-item">
+        <strong>⚠️ MapTiler Tile Explosion</strong>
+        <span>Each user panning/zooming the map triggers tile requests. 10 users × 500 tile requests/session = 5K tiles per session. Consider self-hosting with Protomaps from day one to eliminate this risk entirely.</span>
+      </div>
+      <div class="risk-item">
+        <strong>⚠️ MarineTraffic Free Limit</strong>
+        <span>50 calls/day free is very limiting for AIS data. The 3-tier cache makes this workable (cache AIS positions for 30s). Growth: upgrade to Basic API ($49/mo) or use USCG NAIS (free) for US waters.</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- TOTAL BAR -->
+<div class="ledger-line"></div>
+<div class="total-bar">
+  <div class="total-bar-inner">
+    <div>
+      <div class="total-bar-title">Insurance Risk Intelligence Platform — Total Cost of Ownership</div>
+      <div class="total-bar-sub">Solo developer · You build it · Infrastructure only · All figures in USD</div>
+    </div>
+    <div class="total-bar-item">
+      <div class="total-bar-label">YEAR 1 (MVP → Beta)</div>
+      <div class="total-bar-val">~$600</div>
+    </div>
+    <div class="total-bar-item">
+      <div class="total-bar-label">YEAR 2 (Growth Stage)</div>
+      <div class="total-bar-val">~$2,400</div>
+    </div>
+    <div class="total-bar-item">
+      <div class="total-bar-label">YEAR 3 (Scale Stage)</div>
+      <div class="total-bar-val">~$5,400</div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

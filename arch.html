@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IRIP — Insurance Risk Intelligence Platform Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050810;
+    --bg2: #080d1a;
+    --bg3: #0d1526;
+    --grid: #ffffff06;
+    --border: #ffffff12;
+    --border-hi: #ffffff22;
+    --text: #e8edf8;
+    --text-dim: #6b7a9a;
+    --text-mid: #9ba8c4;
+    --accent: #0af0c8;
+    --accent2: #3d7fff;
+    --accent3: #ff6b35;
+    --accent4: #c084fc;
+    --accent5: #f59e0b;
+    --red: #ff3d5a;
+    --green: #0af0c8;
+
+    /* Line colors per domain */
+    --cat: #ff6b35;
+    --avia: #3d7fff;
+    --polrisk: #c084fc;
+    --marine: #06b6d4;
+    --cyber: #ff3d5a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  .container { max-width: 1400px; margin: 0 auto; padding: 0 32px; }
+
+  /* HEADER */
+  header {
+    padding: 48px 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .header-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .header-tag::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--accent);
+  }
+
+  h1 {
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .header-meta {
+    margin-top: 20px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  .meta-item strong { color: var(--text-mid); }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 24px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-mid);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* SECTIONS */
+  section {
+    padding: 48px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 32px;
+    color: var(--text);
+  }
+
+  /* ARCHITECTURE OVERVIEW — FLOW DIAGRAM */
+  .flow {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .flow-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 2px;
+  }
+
+  .flow-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 16px 4px;
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .flow-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .flow-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    color: var(--text-dim);
+    font-size: 18px;
+  }
+
+  .node {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 16px 18px;
+    border-radius: 4px;
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+    cursor: default;
+  }
+
+  .node:hover {
+    background: var(--bg3);
+    border-color: var(--border-hi);
+  }
+
+  .node-name {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
+  }
+
+  .node-desc {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.5;
+  }
+
+  .node-tag {
+    position: absolute;
+    top: 8px; right: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+
+  .tag-free { background: #0af0c820; color: var(--accent); }
+  .tag-paid { background: #ff6b3520; color: var(--accent3); }
+  .tag-hybrid { background: #3d7fff20; color: var(--accent2); }
+  .tag-core { background: #c084fc20; color: var(--accent4); }
+
+  /* Domain accent borders */
+  .cat   { border-left: 3px solid var(--cat); }
+  .avia  { border-left: 3px solid var(--avia); }
+  .pol   { border-left: 3px solid var(--polrisk); }
+  .mar   { border-left: 3px solid var(--marine); }
+  .cyber { border-left: 3px solid var(--cyber); }
+  .core  { border-left: 3px solid var(--accent); }
+  .ai    { border-left: 3px solid var(--accent4); }
+  .cache { border-left: 3px solid var(--accent5); }
+
+  /* LAYER CARDS */
+  .layers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 16px;
+  }
+
+  .layer-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .layer-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .layer-icon {
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .layer-title { font-size: 15px; font-weight: 700; }
+  .layer-subtitle { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  .layer-body { padding: 16px 20px; }
+
+  .api-list { list-style: none; }
+
+  .api-item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .api-item:last-child { border-bottom: none; }
+
+  .api-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+
+  .api-name { font-weight: 600; }
+  .api-note { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+  .api-cost {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+    align-self: start;
+  }
+
+  .cost-free { background: #0af0c815; color: var(--accent); }
+  .cost-freemium { background: #3d7fff15; color: var(--accent2); }
+  .cost-paid { background: #ff6b3515; color: var(--accent3); }
+
+  /* TECH STACK TABLE */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+  }
+
+  .stack-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+
+  .stack-category {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .stack-category::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--border);
+  }
+
+  .stack-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .stack-item:last-child { border-bottom: none; }
+  .stack-item-name { font-weight: 600; }
+  .stack-item-detail { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); }
+
+  /* SCORING ENGINE */
+  .scoring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+  }
+
+  .scoring-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+  }
+
+  .scoring-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .scoring-formula {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: #0af0c808;
+    border: 1px solid #0af0c820;
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 10px 0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+
+  .scoring-inputs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .scoring-input {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 2px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+  }
+
+  /* DEPLOYMENT */
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  @media (max-width: 900px) { .deploy-grid { grid-template-columns: 1fr; } }
+
+  .deploy-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 24px;
+  }
+
+  .deploy-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .deploy-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .deploy-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .deploy-item {
+    display: flex;
+    gap: 10px;
+    font-size: 12px;
+    align-items: start;
+  }
+
+  .deploy-item-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* PHASE TIMELINE */
+  .phases {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    position: relative;
+  }
+
+  @media (max-width: 800px) { .phases { grid-template-columns: 1fr 1fr; } }
+
+  .phase {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px;
+    position: relative;
+  }
+
+  .phase-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  .phase-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+
+  .phase-items {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .phase-item {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-mid);
+    display: flex;
+    align-items: start;
+    gap: 6px;
+  }
+
+  .phase-item::before {
+    content: '→';
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .phase-duration {
+    margin-top: 14px;
+    padding: 6px 10px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent5);
+    display: inline-block;
+  }
+
+  /* RISK SCORE PIPELINE */
+  .pipeline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    align-items: stretch;
+  }
+
+  .pipeline-step {
+    flex: 1;
+    min-width: 140px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-right: none;
+    padding: 16px;
+    position: relative;
+  }
+
+  .pipeline-step:last-child { border-right: 1px solid var(--border); }
+
+  .pipeline-step::after {
+    content: '▶';
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--text-dim);
+    z-index: 1;
+    background: var(--bg);
+    padding: 2px 0;
+  }
+
+  .pipeline-step:last-child::after { display: none; }
+
+  .pipeline-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--border-hi);
+    margin-bottom: 8px;
+  }
+
+  .pipeline-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .pipeline-desc { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-dim); line-height: 1.5; }
+
+  /* BIG NUMBER STATS */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 2px;
+    margin-bottom: 40px;
+  }
+
+  .stat {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: gap;
+  }
+
+  .footer-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  /* ANIMATED ACCENT LINE */
+  .accent-line {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), var(--accent4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } }
+
+  .callout {
+    background: linear-gradient(135deg, #0af0c808, #3d7fff08);
+    border: 1px solid #0af0c820;
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+
+  .callout-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 6px;
+  }
+
+  .callout-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text-mid);
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<div class="accent-line"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-tag">Technical Architecture Document</div>
+  <h1>Insurance Risk<br><span>Intelligence Platform</span></h1>
+  <div class="header-meta">
+    <div class="meta-item"><strong>Version</strong> 1.0 — Architecture Draft</div>
+    <div class="meta-item"><strong>Lines of Business</strong> P&C · Aviation · Political Risk · Marine · Cyber</div>
+    <div class="meta-item"><strong>Inspired By</strong> WorldMonitor.app</div>
+    <div class="meta-item"><strong>Primary Stack</strong> TypeScript · React · Vite · deck.gl · globe.gl</div>
+  </div>
+</header>
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cat)"></div>Property & Casualty / Nat Cat</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--avia)"></div>Aviation & Travel</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--polrisk)"></div>Political Risk / War</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--marine)"></div>Marine & Cargo</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyber)"></div>Cyber Insurance</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Core Infrastructure</div>
+</div>
+
+<!-- STATS -->
+<section>
+  <div class="section-label">Platform at a Glance</div>
+  <div class="section-title">Scale & Coverage</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">Insurance Lines</div></div>
+    <div class="stat"><div class="stat-num">40+</div><div class="stat-label">Data Sources</div></div>
+    <div class="stat"><div class="stat-num">28</div><div class="stat-label">Free/Open APIs</div></div>
+    <div class="stat"><div class="stat-num">8</div><div class="stat-label">Map Layers</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">AI Models</div></div>
+    <div class="stat"><div class="stat-num">&lt;200ms</div><div class="stat-label">Risk Score Latency</div></div>
+    <div class="stat"><div class="stat-num">Global</div><div class="stat-label">Coverage</div></div>
+    <div class="stat"><div class="stat-num">Real-time</div><div class="stat-label">Event Streaming</div></div>
+  </div>
+
+  <!-- SYSTEM OVERVIEW FLOW -->
+  <div class="callout">
+    <div class="callout-title">System Philosophy</div>
+    <div class="callout-text">
+      IRIP follows WorldMonitor's three-tier model: (1) External APIs → ingested via Edge Functions with 3-tier cache, (2) AI engine computes risk scores in-browser using embedded ONNX models + LLM fallback, (3) Map renderer overlays scored events as interactive layers. All 5 insurance lines share the same core infrastructure; domain logic is modular and additive.
+    </div>
+  </div>
+
+  <div class="flow">
+    <!-- INGESTION TIER -->
+    <div class="flow-label">TIER 1 — DATA INGESTION</div>
+    <div class="flow-row">
+      <div class="node cat"><span class="node-tag tag-free">FREE</span><div class="node-name">Nat Cat Feeds</div><div class="node-desc">USGS · NASA EONET · NASA FIRMS · GDACS · NOAA NWS · OpenFEMA</div></div>
+      <div class="node avia"><span class="node-tag tag-free">FREE</span><div class="node-name">Aviation Feeds</div><div class="node-desc">OpenSky ADS-B · AviationStack NOTAM · ICAO NAIP · FAA TFMS</div></div>
+      <div class="node pol"><span class="node-tag tag-free">FREE</span><div class="node-name">Political Feeds</div><div class="node-desc">ACLED · GDELT · UN OCHA HAPI · Armed Conflict Location</div></div>
+      <div class="node mar"><span class="node-tag tag-free">FREE</span><div class="node-name">Marine Feeds</div><div class="node-desc">AIS via MarineTraffic free · USCG NAIS · IMO GISIS · MAIB</div></div>
+      <div class="node cyber"><span class="node-tag tag-free">FREE</span><div class="node-name">Cyber Feeds</div><div class="node-desc">abuse.ch · AlienVault OTX · AbuseIPDB · CISA Alerts · CIRCL CVE</div></div>
+    </div>
+
+    <div class="flow-arrow">↓</div>
+
+    <!-- EDGE PROCESSING -->
+    <div class="flow-label">TIER 2 — EDGE PROCESSING (Vercel Edge Functions)</div>
+    <div class="flow-row">
+      <div class="node core"><span class="node-tag tag-core">CORE</span><div class="node-name">API Gateway</div><div class="node-desc">60+ endpoints, rate limiting, API key vault, fan-out fetcher</div></div>
+      <div class="node cache"><span class="node-tag tag-core">CORE</span><div class="node-name">3-Tier Cache</div><div class="node-desc">In-memory (hot) → Upstash Redis (warm) → Upstream (cold). s-maxage CDN headers</div></div>
+      <div class="node core"><span class="node-tag tag-core">CORE</span><div class="node-name">Normalizer</div><div class="node-desc">Transforms all feeds into unified RiskEvent schema. Protobuf wire format</div></div>
+      <div class="node ai"><span class="node-tag tag-core">AI</span><div class="node-name">Pre-Classifier</div><div class="node-desc">Keyword + regex fast-path. LLM override via Groq for ambiguous events</div></div>
+      <div class="node core"><span class="node-tag tag-core">CORE</span><div class="node-name">WebSocket Relay</div><div class="node-desc">Railway.app — real-time push for OREF sirens, AIS, FIRMS fire detections</div></div>
+    </div>
+
+    <div class="flow-arrow">↓</div>
+
+    <!-- BROWSER ENGINE -->
+    <div class="flow-label">TIER 3 — BROWSER INTELLIGENCE ENGINE</div>
+    <div class="flow-row">
+      <div class="node ai"><span class="node-tag tag-core">AI</span><div class="node-name">ONNX Embedder</div><div class="node-desc">all-MiniLM-L6-v2 (384-dim). Runs in Web Worker. Zero server dependency</div></div>
+      <div class="node ai"><span class="node-tag tag-core">AI</span><div class="node-name">Vector Store</div><div class="node-desc">IndexedDB 5K headline RAG. Semantic similarity search for past claims/events</div></div>
+      <div class="node ai"><span class="node-tag tag-core">AI</span><div class="node-name">Risk Scorer</div><div class="node-desc">Welford online algorithm. Z-score anomaly (σ 1.5/2.0/3.0). Per-domain models</div></div>
+      <div class="node ai"><span class="node-tag tag-core">AI</span><div class="node-name">LLM Router</div><div class="node-desc">Groq (primary) → OpenRouter (fallback) → Ollama (local). Auto-failover</div></div>
+      <div class="node core"><span class="node-tag tag-core">CORE</span><div class="node-name">Event Bus</div><div class="node-desc">Browser EventEmitter. Decouples scoring pipeline from map layer updates</div></div>
+    </div>
+
+    <div class="flow-arrow">↓</div>
+
+    <!-- PRESENTATION -->
+    <div class="flow-label">TIER 4 — VISUALIZATION & UX</div>
+    <div class="flow-row">
+      <div class="node core"><span class="node-tag tag-core">UI</span><div class="node-name">globe.gl + Three.js</div><div class="node-desc">3D globe view. Arcs for marine routes. Heat rings for Nat Cat events</div></div>
+      <div class="node core"><span class="node-tag tag-core">UI</span><div class="node-name">deck.gl + MapLibre</div><div class="node-desc">Flat 2D map. HexagonLayer, H3 grid, ScatterplotLayer, PathLayer</div></div>
+      <div class="node core"><span class="node-tag tag-core">UI</span><div class="node-name">Layer Manager</div><div class="node-desc">Per-domain layer toggles. Opacity, filter by severity, time-slider playback</div></div>
+      <div class="node core"><span class="node-tag tag-core">UI</span><div class="node-name">Risk Dashboard</div><div class="node-desc">Underwriting signals panel. Alert feed. Exposure heatmap. Score trends</div></div>
+      <div class="node core"><span class="node-tag tag-core">UI</span><div class="node-name">Report Generator</div><div class="node-desc">PDF export of risk assessment. AI-generated narrative per event/region</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DATA LAYER CARDS -->
+<section>
+  <div class="section-label">Domain Intelligence Layers</div>
+  <div class="section-title">Insurance Lines → Data Sources</div>
+
+  <div class="layers-grid">
+
+    <!-- P&C -->
+    <div class="layer-card">
+      <div class="layer-header" style="border-left: 3px solid var(--cat)">
+        <div class="layer-icon" style="background:#ff6b3520">🌪️</div>
+        <div>
+          <div class="layer-title">Property & Casualty / Nat Cat</div>
+          <div class="layer-subtitle">EARTHQUAKE · FLOOD · WILDFIRE · HURRICANE · HAIL</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <ul class="api-list">
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">USGS Earthquake Hazards</div><div class="api-note">earthquake.usgs.gov/fdsnws/event/1/ — real-time M0+ global, GeoJSON/QuakeML</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">NASA EONET</div><div class="api-note">eonet.gsfc.nasa.gov/api/v3/events — wildfires, volcanoes, floods, storms</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">NASA FIRMS (VIIRS)</div><div class="api-note">firms.modaps.eosdis.nasa.gov — sub-daily satellite fire detection, global</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">GDACS</div><div class="api-note">gdacs.org/gdacsapi — structured disaster alerts, severity scores</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">NOAA NWS API</div><div class="api-note">api.weather.gov — alerts, forecasts, severe weather warnings, USA</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">OpenFEMA / NFIP</div><div class="api-note">floods.gov/api — flood insurance claims, disaster declarations, NFIP policies</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">Copernicus EMS (EU)</div><div class="api-note">Satellite flood mapping, wildfire perimeters, free via EFFIS</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cat)"></div>
+            <div><div class="api-name">Moody's Location API</div><div class="api-note">100M+ US properties with peril scoring — for point-of-underwriting</div></div>
+            <div class="api-cost cost-paid">PAID</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- AVIATION -->
+    <div class="layer-card">
+      <div class="layer-header" style="border-left: 3px solid var(--avia)">
+        <div class="layer-icon" style="background:#3d7fff20">✈️</div>
+        <div>
+          <div class="layer-title">Aviation & Travel</div>
+          <div class="layer-subtitle">FLIGHT TRACKING · NOTAM · AIRSPACE CLOSURES · DELAY RISK</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <ul class="api-list">
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">OpenSky Network</div><div class="api-note">opensky-network.org/api — free ADS-B live flight positions, 500K+ aircraft</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">ICAO GIS (NAIP)</div><div class="api-note">navlost.eu ICAO NAIP — airspace structure, FIR boundaries, restricted zones</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">FAA NOTAM API</div><div class="api-note">notams.aim.faa.gov/api — USA NOTAM notices, airspace closures</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">GPSJam.org</div><div class="api-note">GPS interference heatmap — conflict zones affecting avionics</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">AviationStack</div><div class="api-note">Real-time flight status, delays, cancellations — 500 calls/month free tier</div></div>
+            <div class="api-cost cost-freemium">FREEMIUM</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">ACARS / FlightAware</div><div class="api-note">Flight events, gate info, tail numbers — freemium tier available</div></div>
+            <div class="api-cost cost-freemium">FREEMIUM</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--avia)"></div>
+            <div><div class="api-name">ASN Aviation Safety</div><div class="api-note">Aviation Safety Network RSS — accident/incident feed, free scrape</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- POLITICAL RISK -->
+    <div class="layer-card">
+      <div class="layer-header" style="border-left: 3px solid var(--polrisk)">
+        <div class="layer-icon" style="background:#c084fc20">⚔️</div>
+        <div>
+          <div class="layer-title">Political Risk & War Exclusions</div>
+          <div class="layer-subtitle">CONFLICT · SANCTIONS · STABILITY INDEX · PROTESTS</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <ul class="api-list">
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">ACLED</div><div class="api-note">acleddata.com/api — armed conflict events, fatalities, actor classification</div></div>
+            <div class="api-cost cost-freemium">NON-COMM</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">GDELT 2.0</div><div class="api-note">gdeltproject.org — 100+ countries, 300+ event types, 15-minute updates</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">UN OCHA HAPI</div><div class="api-note">hapi.humdata.org — humanitarian crisis indicators, conflict zones</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">UCDP (Uppsala)</div><div class="api-note">ucdp.uu.se/apidocs — conflict dataset with standardized coding</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">OFAC Sanctions API</div><div class="api-note">treasury.gov OFAC SDN list — sanctions screening, entity risk</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">Polymarket</div><div class="api-note">polymarket.com/api — prediction markets for geopolitical risk signals</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--polrisk)"></div>
+            <div><div class="api-name">PRS Group / Oxford Analytica</div><div class="api-note">Country risk ratings, political stability — for commercial tier</div></div>
+            <div class="api-cost cost-paid">PAID</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- MARINE -->
+    <div class="layer-card">
+      <div class="layer-header" style="border-left: 3px solid var(--marine)">
+        <div class="layer-icon" style="background:#06b6d420">🚢</div>
+        <div>
+          <div class="layer-title">Marine & Cargo</div>
+          <div class="layer-subtitle">VESSEL TRACKING · CHOKEPOINTS · PIRACY · WEATHER ROUTING</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <ul class="api-list">
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">MarineTraffic (Free)</div><div class="api-note">marinetraffic.com/api — AIS vessel positions, free tier 50 calls/day</div></div>
+            <div class="api-cost cost-freemium">FREEMIUM</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">USCG NAIS (USA AIS)</div><div class="api-note">Coast Guard AIS feed — free for US coastal waters</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">IMO GISIS</div><div class="api-note">gisis.imo.org — maritime incidents, casualty reports, PSC inspections</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">ICC-IMB Piracy Portal</div><div class="api-note">icc-ccs.org — live piracy & armed robbery reports, Gulf of Aden etc.</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">UKMTO</div><div class="api-note">ukmto.org — UK Maritime Trade Operations, voluntary incident reporting</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">Stormglass.io Weather</div><div class="api-note">Marine weather for routing — wave height, swell, wind — 10 calls/day free</div></div>
+            <div class="api-cost cost-freemium">FREEMIUM</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--marine)"></div>
+            <div><div class="api-name">spire.com Maritime</div><div class="api-note">Satellite AIS — global coverage beyond coastal — commercial</div></div>
+            <div class="api-cost cost-paid">PAID</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- CYBER -->
+    <div class="layer-card">
+      <div class="layer-header" style="border-left: 3px solid var(--cyber)">
+        <div class="layer-icon" style="background:#ff3d5a20">🛡️</div>
+        <div>
+          <div class="layer-title">Cyber Insurance</div>
+          <div class="layer-subtitle">THREAT INTEL · RANSOMWARE · CVEs · BREACH SIGNALS</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <ul class="api-list">
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">abuse.ch Feodo Tracker</div><div class="api-note">feodotracker.abuse.ch/api — C2 botnet IPs, malware family classification</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">AlienVault OTX</div><div class="api-note">otx.alienvault.com/api — IOCs, threat pulses, community threat intel</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">CISA Known Exploited CVEs</div><div class="api-note">cisa.gov/known-exploited-vulnerabilities-catalog — KEV catalog, JSON feed</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">CIRCL CVE Search</div><div class="api-note">cve.circl.lu/api — NVD-backed CVE lookup with CVSS scoring</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">AbuseIPDB</div><div class="api-note">abuseipdb.com/api — IP reputation, 1K checks/day free</div></div>
+            <div class="api-cost cost-freemium">FREEMIUM</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">Cloudflare Radar</div><div class="api-note">radar.cloudflare.com/api — DDoS trends, BGP route leaks, internet outages</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">Ransomware.live</div><div class="api-note">ransomware.live/api — active ransomware groups, victim posts, TTPs</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--cyber)"></div>
+            <div><div class="api-name">Shodan / Censys</div><div class="api-note">Exposed asset discovery for insured entities — for commercial tier</div></div>
+            <div class="api-cost cost-paid">PAID</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- SHARED / MACRO -->
+    <div class="layer-card">
+      <div class="layer-header" style="border-left: 3px solid var(--accent)">
+        <div class="layer-icon" style="background:#0af0c820">📊</div>
+        <div>
+          <div class="layer-title">Macro & Reinsurance Signals</div>
+          <div class="layer-subtitle">ECONOMIC · ILS MARKET · CATASTROPHE BONDS · FRED</div>
+        </div>
+      </div>
+      <div class="layer-body">
+        <ul class="api-list">
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--accent)"></div>
+            <div><div class="api-name">FRED API (Federal Reserve)</div><div class="api-note">fred.stlouisfed.org/docs/api — inflation, interest rates, GDP, housing</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--accent)"></div>
+            <div><div class="api-name">EIA Energy API</div><div class="api-note">eia.gov/opendata — oil/gas prices, energy supply disruption signals</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--accent)"></div>
+            <div><div class="api-name">ARTEMIS RSS</div><div class="api-note">artemis.bm/feed — cat bond & ILS market news, reinsurance events</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--accent)"></div>
+            <div><div class="api-name">Swiss Re / Munich Re Blogs</div><div class="api-note">RSS feeds — sigma reports, nat cat loss estimates, market signals</div></div>
+            <div class="api-cost cost-free">FREE</div>
+          </li>
+          <li class="api-item">
+            <div class="api-dot" style="background:var(--accent)"></div>
+            <div><div class="api-name">Yahoo Finance</div><div class="api-note">Reinsurance stocks (RNR, MRH, AXS), forex, commodity prices</div></div>
+            <div class="api-cost cost-free">FREE*</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- RISK SCORING ENGINE -->
+<section>
+  <div class="section-label">Intelligence Engine</div>
+  <div class="section-title">Risk Scoring Pipeline</div>
+
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <div class="pipeline-num">01</div>
+      <div class="pipeline-name">Ingest</div>
+      <div class="pipeline-desc">Raw API responses normalized to RiskEvent schema. Deduplication via SHA-256 event fingerprint.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-num">02</div>
+      <div class="pipeline-name">Embed</div>
+      <div class="pipeline-desc">ONNX all-MiniLM-L6-v2 in Web Worker produces 384-dim vector per headline. Stored in IndexedDB.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-num">03</div>
+      <div class="pipeline-name">Classify</div>
+      <div class="pipeline-desc">Keyword fast-path → insurance line tag (P&C, Marine, etc). Groq LLM override for edge cases.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-num">04</div>
+      <div class="pipeline-name">Baseline</div>
+      <div class="pipeline-desc">Welford's algorithm builds rolling 90-day mean/variance per event-type × region × weekday × month.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-num">05</div>
+      <div class="pipeline-name">Score</div>
+      <div class="pipeline-desc">Z-score vs baseline → σ 1.5 = Elevated, σ 2.0 = High, σ 3.0 = Critical. Composite per insurance line.</div>
+    </div>
+    <div class="pipeline-step">
+      <div class="pipeline-num">06</div>
+      <div class="pipeline-name">Render</div>
+      <div class="pipeline-desc">Scored events pushed to map layers via Event Bus. Severity drives color, size, pulse animation.</div>
+    </div>
+  </div>
+
+  <br/>
+
+  <div class="scoring-grid">
+
+    <div class="scoring-card" style="border-left: 3px solid var(--cat)">
+      <div class="scoring-title">🌪️ Nat Cat Risk Index</div>
+      <div class="scoring-formula">NatCatRisk = (
+  EQ_Score × 0.30 +   // USGS magnitude/depth
+  Fire_Score × 0.25 + // FIRMS radiative power
+  Flood_Score × 0.20 + // NFIP + GDACS
+  Storm_Score × 0.15 + // NOAA alerts
+  Volcano_Score × 0.10
+) × Exposure_Multiplier</div>
+      <div class="scoring-inputs">
+        <span class="scoring-input">USGS M-value</span>
+        <span class="scoring-input">FIRMS FRP</span>
+        <span class="scoring-input">GDACS alert level</span>
+        <span class="scoring-input">Population density</span>
+        <span class="scoring-input">NFIP claims history</span>
+      </div>
+    </div>
+
+    <div class="scoring-card" style="border-left: 3px solid var(--avia)">
+      <div class="scoring-title">✈️ Aviation Risk Index</div>
+      <div class="scoring-formula">AviaRisk = (
+  AirspaceClosure × 0.35 + // NOTAMs
+  GPSJam × 0.25 +          // GPS interference
+  ConflictOverflight × 0.20 + // ACLED near routes
+  WeatherSeverity × 0.15 + // NOAA SIGMETs
+  IncidentRate × 0.05      // ASN 90-day rolling
+) × Route_Exposure</div>
+      <div class="scoring-inputs">
+        <span class="scoring-input">NOTAM type</span>
+        <span class="scoring-input">GPSJam density</span>
+        <span class="scoring-input">Active conflict radius</span>
+        <span class="scoring-input">SIGMET coverage</span>
+      </div>
+    </div>
+
+    <div class="scoring-card" style="border-left: 3px solid var(--polrisk)">
+      <div class="scoring-title">⚔️ Political Risk Index</div>
+      <div class="scoring-formula">PolRisk = (
+  ConflictIntensity × 0.35 + // ACLED fatalities/events
+  GovInstability × 0.25 +    // GDELT tone score
+  SanctionsExposure × 0.20 + // OFAC SDN hits
+  ProtestScale × 0.10 +      // GDELT crowd events
+  PredictiveMarket × 0.10    // Polymarket odds
+) × Country_Weight</div>
+      <div class="scoring-inputs">
+        <span class="scoring-input">ACLED fatality rate</span>
+        <span class="scoring-input">GDELT avg tone</span>
+        <span class="scoring-input">OFAC exposure</span>
+        <span class="scoring-input">Polymarket probability</span>
+      </div>
+    </div>
+
+    <div class="scoring-card" style="border-left: 3px solid var(--marine)">
+      <div class="scoring-title">🚢 Marine Risk Index</div>
+      <div class="scoring-formula">MarineRisk = (
+  PiracyZone × 0.30 +     // ICC-IMB incidents
+  ChokeDisruption × 0.25 + // AIS congestion index
+  WeatherRouting × 0.20 + // Stormglass wave/wind
+  ConflictAdj × 0.15 +    // ACLED coastal
+  CargoType × 0.10        // Hazmat multiplier
+) × Voyage_Exposure</div>
+      <div class="scoring-inputs">
+        <span class="scoring-input">ICC-IMB zone code</span>
+        <span class="scoring-input">AIS chokepoint delay</span>
+        <span class="scoring-input">Wave height (m)</span>
+        <span class="scoring-input">Cargo value tier</span>
+      </div>
+    </div>
+
+    <div class="scoring-card" style="border-left: 3px solid var(--cyber)">
+      <div class="scoring-title">🛡️ Cyber Risk Index</div>
+      <div class="scoring-formula">CyberRisk = (
+  ThreatActivity × 0.30 + // OTX pulse volume
+  RansomwareActive × 0.25 + // ransomware.live
+  KEV_Exposure × 0.20 +   // CISA KEV match
+  OutageSignal × 0.15 +   // Cloudflare Radar
+  C2Activity × 0.10       // Feodo Tracker
+) × Sector_Multiplier</div>
+      <div class="scoring-inputs">
+        <span class="scoring-input">OTX pulse count</span>
+        <span class="scoring-input">Active RaaS groups</span>
+        <span class="scoring-input">CVSS score</span>
+        <span class="scoring-input">BGP anomaly</span>
+      </div>
+    </div>
+
+    <div class="scoring-card" style="border-left: 3px solid var(--accent)">
+      <div class="scoring-title">📊 Composite Exposure Score</div>
+      <div class="scoring-formula">ExposureScore = MAX(
+  NatCatRisk,
+  AviaRisk,
+  PolRisk,
+  MarineRisk,
+  CyberRisk
+) × SQRT(
+  SUM(all_active_scores) / N
+)
+// Max dominant + RMS of all active lines</div>
+      <div class="scoring-inputs">
+        <span class="scoring-input">Per-line scores</span>
+        <span class="scoring-input">Temporal decay</span>
+        <span class="scoring-input">Correlation matrix</span>
+        <span class="scoring-input">Portfolio exposure</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section>
+  <div class="section-label">Technology Stack</div>
+  <div class="section-title">Component Architecture</div>
+
+  <div class="stack-grid">
+
+    <div class="stack-card">
+      <div class="stack-category">Frontend</div>
+      <div class="stack-item"><span class="stack-item-name">React 18 + TypeScript</span><span class="stack-item-detail">Component framework</span></div>
+      <div class="stack-item"><span class="stack-item-name">Vite 5</span><span class="stack-item-detail">Build + HMR</span></div>
+      <div class="stack-item"><span class="stack-item-name">Zustand</span><span class="stack-item-detail">Global state (layers, alerts)</span></div>
+      <div class="stack-item"><span class="stack-item-name">TanStack Query</span><span class="stack-item-detail">Data fetching + cache</span></div>
+      <div class="stack-item"><span class="stack-item-name">vite-plugin-pwa</span><span class="stack-item-detail">Workbox service worker</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">Map & Visualization</div>
+      <div class="stack-item"><span class="stack-item-name">globe.gl</span><span class="stack-item-detail">3D globe (Three.js based)</span></div>
+      <div class="stack-item"><span class="stack-item-name">deck.gl</span><span class="stack-item-detail">GPU-accelerated 2D layers</span></div>
+      <div class="stack-item"><span class="stack-item-name">MapLibre GL</span><span class="stack-item-detail">Base map (free OSM tiles)</span></div>
+      <div class="stack-item"><span class="stack-item-name">H3 (Uber)</span><span class="stack-item-detail">Hexagonal spatial indexing</span></div>
+      <div class="stack-item"><span class="stack-item-name">Recharts / D3</span><span class="stack-item-detail">Score trend charts</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">AI / ML</div>
+      <div class="stack-item"><span class="stack-item-name">Transformers.js</span><span class="stack-item-detail">ONNX browser inference</span></div>
+      <div class="stack-item"><span class="stack-item-name">all-MiniLM-L6-v2</span><span class="stack-item-detail">384-dim embeddings</span></div>
+      <div class="stack-item"><span class="stack-item-name">Groq (Llama 3.1 8B)</span><span class="stack-item-detail">Primary LLM classification</span></div>
+      <div class="stack-item"><span class="stack-item-name">OpenRouter</span><span class="stack-item-detail">LLM fallback routing</span></div>
+      <div class="stack-item"><span class="stack-item-name">Ollama (local)</span><span class="stack-item-detail">Air-gapped / on-premise</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">Backend / Edge</div>
+      <div class="stack-item"><span class="stack-item-name">Vercel Edge Functions</span><span class="stack-item-detail">60+ API proxy endpoints</span></div>
+      <div class="stack-item"><span class="stack-item-name">Railway.app</span><span class="stack-item-detail">WebSocket relay server</span></div>
+      <div class="stack-item"><span class="stack-item-name">Upstash Redis</span><span class="stack-item-detail">Warm cache layer</span></div>
+      <div class="stack-item"><span class="stack-item-name">Protocol Buffers</span><span class="stack-item-detail">Wire format (buf CLI)</span></div>
+      <div class="stack-item"><span class="stack-item-name">OpenAPI 3.1</span><span class="stack-item-detail">Auto-generated API docs</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">Data Storage</div>
+      <div class="stack-item"><span class="stack-item-name">IndexedDB</span><span class="stack-item-detail">5K vector RAG store</span></div>
+      <div class="stack-item"><span class="stack-item-name">Upstash Redis</span><span class="stack-item-detail">Cross-user AI dedup</span></div>
+      <div class="stack-item"><span class="stack-item-name">localStorage</span><span class="stack-item-detail">User prefs, layer state</span></div>
+      <div class="stack-item"><span class="stack-item-name">Service Worker Cache</span><span class="stack-item-detail">Offline asset caching</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">Desktop (Optional)</div>
+      <div class="stack-item"><span class="stack-item-name">Tauri 2 (Rust)</span><span class="stack-item-detail">macOS/Windows/Linux app</span></div>
+      <div class="stack-item"><span class="stack-item-name">OS Keychain</span><span class="stack-item-detail">Secure API key storage</span></div>
+      <div class="stack-item"><span class="stack-item-name">reqwest (Rust)</span><span class="stack-item-detail">Native TLS HTTP client</span></div>
+      <div class="stack-item"><span class="stack-item-name">Node.js sidecar</span><span class="stack-item-detail">Local AI inference bridge</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">Security & Compliance</div>
+      <div class="stack-item"><span class="stack-item-name">Clerk / Auth0</span><span class="stack-item-detail">Authentication, MFA, SSO</span></div>
+      <div class="stack-item"><span class="stack-item-name">API key vault</span><span class="stack-item-detail">Server-side, never in browser</span></div>
+      <div class="stack-item"><span class="stack-item-name">Row-level security</span><span class="stack-item-detail">Per-org data isolation</span></div>
+      <div class="stack-item"><span class="stack-item-name">Audit logging</span><span class="stack-item-detail">All risk score queries</span></div>
+    </div>
+
+    <div class="stack-card">
+      <div class="stack-category">Deployment</div>
+      <div class="stack-item"><span class="stack-item-name">Vercel</span><span class="stack-item-detail">Edge Functions + CDN + Analytics</span></div>
+      <div class="stack-item"><span class="stack-item-name">Railway</span><span class="stack-item-detail">WebSocket + long-running jobs</span></div>
+      <div class="stack-item"><span class="stack-item-name">GitHub Actions</span><span class="stack-item-detail">CI/CD, proto lint, tests</span></div>
+      <div class="stack-item"><span class="stack-item-name">Docker</span><span class="stack-item-detail">Self-hosted option</span></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- MAP LAYERS -->
+<section>
+  <div class="section-label">Visualization</div>
+  <div class="section-title">Map Layer Architecture</div>
+
+  <div class="flow-row" style="gap: 12px;">
+    <div class="node cat" style="border-left-width: 3px">
+      <div class="node-name">🌪️ Nat Cat Layer</div>
+      <div class="node-desc">deck.gl ScatterplotLayer + pulse animation by severity. H3 HexagonLayer for claim density heatmap. USGS earthquake arcs on globe.</div>
+    </div>
+    <div class="node avia" style="border-left-width: 3px">
+      <div class="node-name">✈️ Aviation Layer</div>
+      <div class="node-desc">OpenSky live flight positions (IconLayer). NOTAM zones (PolygonLayer). GPS interference heatmap. Airspace closure polygons.</div>
+    </div>
+    <div class="node pol" style="border-left-width: 3px">
+      <div class="node-name">⚔️ Political Risk Layer</div>
+      <div class="node-desc">ACLED event dots colored by type (battle/protest/explosion). Country fill choropleth by instability score. Sanctions entity markers.</div>
+    </div>
+    <div class="node mar" style="border-left-width: 3px">
+      <div class="node-name">🚢 Marine Layer</div>
+      <div class="node-desc">AIS vessel tracks (PathLayer). Chokepoint risk zones (PolygonLayer). Piracy incident dots. Wave height raster overlay.</div>
+    </div>
+    <div class="node cyber" style="border-left-width: 3px">
+      <div class="node-name">🛡️ Cyber Layer</div>
+      <div class="node-desc">C2 botnet origin countries (choropleth). BGP anomaly arcs. Ransomware victim geo-dots. Internet outage heatmap from Cloudflare Radar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DEPLOYMENT -->
+<section>
+  <div class="section-label">Infrastructure</div>
+  <div class="section-title">Deployment Architecture</div>
+
+  <div class="deploy-grid">
+    <div class="deploy-card" style="border-left: 3px solid var(--accent2)">
+      <div class="deploy-title">Vercel Edge Network</div>
+      <div class="deploy-sub">PRIMARY COMPUTE PLANE</div>
+      <div class="deploy-items">
+        <div class="deploy-item"><span class="deploy-item-icon">⚡</span><div>60+ Edge Functions — one per upstream API source, globally distributed</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">🗄️</span><div>CDN caching with s-maxage headers per endpoint (15s to 6h)</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">🔑</span><div>API keys stored as Vercel environment secrets — never client-side</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">📊</span><div>Vercel Analytics for privacy-first usage telemetry</div></div>
+      </div>
+    </div>
+
+    <div class="deploy-card" style="border-left: 3px solid var(--accent5)">
+      <div class="deploy-title">Railway.app Services</div>
+      <div class="deploy-sub">REAL-TIME & LONG-RUNNING</div>
+      <div class="deploy-items">
+        <div class="deploy-item"><span class="deploy-item-icon">🔌</span><div>WebSocket relay — pushes live AIS, FIRMS fire detections, NOTAM changes</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">📡</span><div>ACLED / GDELT polling daemon — 15-min update cycle</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">📰</span><div>RSS aggregator — ARTEMIS, Swiss Re, CISA alerts, 100+ feeds</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">🤖</span><div>Async LLM classification queue (Groq API calls, dedup via Redis)</div></div>
+      </div>
+    </div>
+
+    <div class="deploy-card" style="border-left: 3px solid var(--accent4)">
+      <div class="deploy-title">Browser / Client</div>
+      <div class="deploy-sub">INTELLIGENCE ENGINE</div>
+      <div class="deploy-items">
+        <div class="deploy-item"><span class="deploy-item-icon">🧠</span><div>ONNX embedding in dedicated Web Worker (zero server calls)</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">💾</span><div>IndexedDB vector store — 5K events, LRU eviction</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">📱</span><div>PWA — installable, offline-capable, push notifications for critical alerts</div></div>
+        <div class="deploy-item"><span class="deploy-item-icon">🖥️</span><div>Tauri desktop optional — OS keychain, native TLS, air-gapped mode</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section>
+  <div class="section-label">Implementation Roadmap</div>
+  <div class="section-title">Build Phases</div>
+
+  <div class="phases">
+    <div class="phase" style="border-top: 3px solid var(--accent)">
+      <div class="phase-num">PHASE 01</div>
+      <div class="phase-title">Foundation</div>
+      <ul class="phase-items">
+        <li class="phase-item">Vite + React + TypeScript scaffold</li>
+        <li class="phase-item">MapLibre GL + deck.gl integration</li>
+        <li class="phase-item">USGS + EONET + NOAA endpoints</li>
+        <li class="phase-item">Basic Nat Cat layer on 2D map</li>
+        <li class="phase-item">3-tier cache (Upstash Redis)</li>
+        <li class="phase-item">Vercel Edge Function boilerplate</li>
+        <li class="phase-item">RiskEvent unified schema + Protobuf</li>
+      </ul>
+      <div class="phase-duration">Weeks 1–4</div>
+    </div>
+
+    <div class="phase" style="border-top: 3px solid var(--accent2)">
+      <div class="phase-num">PHASE 02</div>
+      <div class="phase-title">Domain Layers</div>
+      <ul class="phase-items">
+        <li class="phase-item">Aviation: OpenSky + NOTAM layer</li>
+        <li class="phase-item">Marine: AIS + ICC-IMB piracy</li>
+        <li class="phase-item">Political: ACLED + GDELT layer</li>
+        <li class="phase-item">Cyber: OTX + Feodo + Cloudflare</li>
+        <li class="phase-item">Layer toggle UI + opacity controls</li>
+        <li class="phase-item">globe.gl 3D view</li>
+        <li class="phase-item">WebSocket relay (Railway)</li>
+      </ul>
+      <div class="phase-duration">Weeks 5–10</div>
+    </div>
+
+    <div class="phase" style="border-top: 3px solid var(--accent4)">
+      <div class="phase-num">PHASE 03</div>
+      <div class="phase-title">AI Intelligence</div>
+      <ul class="phase-items">
+        <li class="phase-item">Transformers.js ONNX embedder</li>
+        <li class="phase-item">IndexedDB 5K vector RAG</li>
+        <li class="phase-item">Welford baseline anomaly engine</li>
+        <li class="phase-item">Per-domain risk scoring formulas</li>
+        <li class="phase-item">Groq LLM classification + router</li>
+        <li class="phase-item">AI-generated risk narratives</li>
+        <li class="phase-item">Semantic alert search</li>
+      </ul>
+      <div class="phase-duration">Weeks 11–16</div>
+    </div>
+
+    <div class="phase" style="border-top: 3px solid var(--accent5)">
+      <div class="phase-num">PHASE 04</div>
+      <div class="phase-title">Product Polish</div>
+      <ul class="phase-items">
+        <li class="phase-item">Underwriter dashboard panels</li>
+        <li class="phase-item">PDF risk report generator</li>
+        <li class="phase-item">Auth (Clerk) + org tenancy</li>
+        <li class="phase-item">Alert rules + push notifications</li>
+        <li class="phase-item">Tauri desktop build (optional)</li>
+        <li class="phase-item">PWA install + offline mode</li>
+        <li class="phase-item">API billing tier + usage metering</li>
+      </ul>
+      <div class="phase-duration">Weeks 17–22</div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-text">IRIP — Insurance Risk Intelligence Platform · Architecture v1.0</div>
+  <div class="footer-text">5 Lines of Business · 40+ Data Sources · 28 Free APIs · 4 Build Phases</div>
+</footer>
+
+<div class="accent-line"></div>
+
+</body>
+</html>
