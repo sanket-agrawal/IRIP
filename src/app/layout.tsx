@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+const plusJakarta = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -17,7 +18,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "IRIP — Intelligence & Risk Insights Platform",
+  title: "Cognova — AI-Powered Risk Intelligence",
   description:
     "Interactive geopolitical, natural disaster, and cyber risk intelligence for companies and their global locations.",
   keywords: [
@@ -27,6 +28,8 @@ export const metadata: Metadata = {
     "natural disaster",
     "global risk",
     "company risk assessment",
+    "AI intelligence",
+    "market research",
   ],
 };
 
@@ -49,7 +52,7 @@ export default function RootLayout({
     >
       <html lang="en" className="dark">
         <body
-          className={`${inter.variable} ${jetbrainsMono.variable} antialiased min-h-screen`}
+          className={`${plusJakarta.variable} ${jetbrainsMono.variable} antialiased min-h-screen`}
         >
           <QueryProvider>
             <TooltipProvider>

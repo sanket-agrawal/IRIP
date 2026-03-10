@@ -44,18 +44,21 @@ export default function InteractiveGlobe() {
   }, []);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
     const updateSize = () => {
-      if (containerRef.current) {
-        setDimensions({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight,
-        });
-      }
+      setDimensions({
+        width: el.clientWidth,
+        height: el.clientHeight,
+      });
     };
 
     updateSize();
-    window.addEventListener("resize", updateSize);
-    return () => window.removeEventListener("resize", updateSize);
+
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -65,17 +68,47 @@ export default function InteractiveGlobe() {
         controls.autoRotate = isAutoRotating;
         controls.autoRotateSpeed = 0.4;
         controls.enableZoom = true;
+        controls.enableRotate = true;
+        controls.enablePan = false;
+        controls.rotateSpeed = 0.8;
         controls.minDistance = 150;
-        controls.maxDistance = 600;
+        controls.maxDistance = 500;
       }
     }
   }, [isAutoRotating]);
 
   useEffect(() => {
     if (globeRef.current) {
-      globeRef.current.pointOfView({ lat: 20, lng: 0, altitude: 2.5 }, 0);
+      globeRef.current.pointOfView({ lat: 25, lng: 30, altitude: 2.2 }, 0);
     }
   }, []);
+
+  // On mobile, prevent globe canvas from stealing scroll.
+  // Allow two-finger gestures for rotation but let single-finger scroll the page.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+    if (!isMobile) return;
+
+    const handler = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        e.stopPropagation();
+      }
+    };
+
+    const canvas = el.querySelector("canvas");
+    if (canvas) {
+      canvas.style.touchAction = "pan-y";
+    }
+
+    return () => {
+      if (canvas) {
+        canvas.style.touchAction = "";
+      }
+    };
+  }, [countries]);
 
   const polygonColor = useCallback(
     (feat: object) => {
@@ -149,14 +182,15 @@ export default function InteractiveGlobe() {
     if (!data) return f.properties.name || "";
     return `
       <div style="
-        background: rgba(10,10,15,0.92);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 8px;
+        background: rgba(10,10,15,0.95);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
         padding: 10px 14px;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Plus Jakarta Sans', sans-serif;
         color: #e8edf8;
         min-width: 160px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
       ">
         <div style="font-size: 14px; font-weight: 700; margin-bottom: 4px;">
           ${data.flag} ${data.name}
@@ -213,9 +247,8 @@ export default function InteractiveGlobe() {
   return (
     <div
       ref={containerRef}
-      className="w-full h-full"
+      className="w-full h-full cursor-grab active:cursor-grabbing"
       onMouseDown={() => setAutoRotating(false)}
-      onTouchStart={() => setAutoRotating(false)}
     >
       <Globe
         ref={globeRef}
